@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from alpha_vantage.techindicators import TechIndicators
+from sklearn.utils import compute_class_weight
+from tensorflow.keras import backend as K
 import matplotlib.pyplot as plt
 from PIL import Image
 import os
@@ -23,7 +25,7 @@ def get_ema(ticker, intervals, start, end):
         df = pd.concat([df, ema[start:end]], axis=1)
         df = df.rename(columns={"EMA": f"ema_{period}"})
 
-        # time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -41,7 +43,7 @@ def get_sma(ticker, intervals, start, end):
         df = pd.concat([df, sma[start:end]], axis=1)
         df = df.rename(columns={"SMA": f"sma_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -59,7 +61,7 @@ def get_wma(ticker, intervals, start, end):
         df = pd.concat([df, wma[start:end]], axis=1)
         df = df.rename(columns={"WMA": f"wma_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -77,7 +79,7 @@ def get_trima(ticker, intervals, start, end):
         df = pd.concat([df, trima[start:end]], axis=1)
         df = df.rename(columns={"TRIMA": f"trima_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -95,7 +97,7 @@ def get_t3(ticker, intervals, start, end):
         df = pd.concat([df, t3[start:end]], axis=1)
         df = df.rename(columns={"T3": f"t3_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -113,7 +115,7 @@ def get_rsi(ticker, intervals, start, end):
         df = pd.concat([df, rsi[start:end]], axis=1)
         df = df.rename(columns={"RSI": f"rsi_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -131,7 +133,7 @@ def get_willr(ticker, intervals, start, end):
         df = pd.concat([df, willr[start:end]], axis=1)
         df = df.rename(columns={"WILLR": f"willr_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -149,7 +151,7 @@ def get_adx(ticker, intervals, start, end):
         df = pd.concat([df, adx[start:end]], axis=1)
         df = df.rename(columns={"ADX": f"adx_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -167,7 +169,7 @@ def get_mom(ticker, intervals, start, end):
         df = pd.concat([df, mom[start:end]], axis=1)
         df = df.rename(columns={"MOM": f"mom_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -185,7 +187,7 @@ def get_cci(ticker, intervals, start, end):
         df = pd.concat([df, cci[start:end]], axis=1)
         df = df.rename(columns={"CCI": f"cci_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -203,7 +205,7 @@ def get_cmo(ticker, intervals, start, end):
         df = pd.concat([df, cmo[start:end]], axis=1)
         df = df.rename(columns={"CMO": f"cmo_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -221,7 +223,7 @@ def get_roc(ticker, intervals, start, end):
         df = pd.concat([df, roc[start:end]], axis=1)
         df = df.rename(columns={"ROC": f"roc_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -239,7 +241,7 @@ def get_mfi(ticker, intervals, start, end):
         df = pd.concat([df, mfi[start:end]], axis=1)
         df = df.rename(columns={"MFI": f"mfi_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -257,7 +259,7 @@ def get_trix(ticker, intervals, start, end):
         df = pd.concat([df, trix[start:end]], axis=1)
         df = df.rename(columns={"TRIX": f"trix_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
@@ -275,21 +277,21 @@ def get_dx(ticker, intervals, start, end):
         df = pd.concat([df, dx[start:end]], axis=1)
         df = df.rename(columns={"DX": f"dx_{period}"})
 
-        #time.sleep(12)
+        time.sleep(12)
 
     return df
 
 
-#### CREATE LABELS FROM CLOSE PRICE ####
-
-
+# Create labels from close price
 def create_labels(df, window_size=11):
     '''
     Data is labeled as per algorithm in reference paper.
-    BUY = 1, SELL = 0, HOLD = 2
+    0 - SELL
+    1 - BUY
+    2 - HOLD
 
-    input: df - data
-    output: labels as np array of integers, size=len(df)-window_size+1
+    Input: df - data
+    Output: labels - np array of integers, size=len(df)-window_size+1
     '''
 
     row_counter = 0
@@ -333,7 +335,7 @@ def create_labels(df, window_size=11):
     return labels
 
 
-#### RESHAPE DATA AS IMAGE ####
+# Reshape data into 2D each
 def reshape_data(x, width, height):
     x_temp = np.zeros((len(x), height, width))
 
@@ -343,35 +345,82 @@ def reshape_data(x, width, height):
     return x_temp
 
 
-def show_images(rows, columns, path):
-    w = 10
-    h = 10
-    fig = plt.figure(figsize=(10, 10))
-    files = os.listdir(path)
-    for i in range(1, columns * rows + 1):
-        index = np.random.randint(len(files))
-        img = np.asarray(Image.open(os.path.join(path, files[index])))
-        fig.add_subplot(rows, columns, i)
-        plt.title(files[i], fontsize=10)
-        plt.subplots_adjust(wspace=0.5, hspace=0.5)
-        plt.imshow(img)
+# Calculate sample weights
+def get_sample_weights(y):
+    """
+    Calculate the sample weights based on class weights. Used for models with
+    imbalanced data and one hot encoding prediction.
+
+    Input: y - class labels as integers
+    """
+
+    y = y.astype(int)  # compute_class_weight needs int labels
+    class_weights = compute_class_weight('balanced', classes=np.unique(y), y=y)
+
+    print(f"Class weights {class_weights}")
+    print(f"Value counts: {np.unique(y, return_counts=True)}")
+
+    sample_weights = y.copy().astype(float)
+
+    for i in np.unique(y):
+        sample_weights[sample_weights == i] = class_weights[i]
+
+    return sample_weights
+
+
+# Calculate F1-Score of model
+def f1_score(y_true, y_pred):
+
+    def recall(y_true, y_pred):
+
+        # mistake: y_pred of 0.3 is also considered 1
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+
+        return recall
+
+    def precision(y_true, y_pred):
+
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+
+        return precision
+
+    precision = precision(y_true, y_pred)
+    recall = recall(y_true, y_pred)
+
+    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
+
+# Plot accuracy and loss of neural network model
+def plot_history(history):
+    # Plotting loss
+    plt.plot([i + 1 for i in range(len(history["loss"]))], history['loss'])
+    plt.plot([i + 1 for i in range(len(history["loss"]))], history['val_loss'])
+    plt.title('Model Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
 
+    # Plotting accuracy on training data
+    plt.plot([i + 1 for i in range(len(history["loss"]))], history['accuracy'])
+    plt.plot([i + 1 for i in range(len(history["loss"]))],
+             history['val_accuracy'])
+    plt.title('Model Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
 
-# def save_array_as_images(x, img_width, img_height, path, file_names):
-#     if os.path.exists(path):
-#         shutil.rmtree(path)
-#         print("deleted old files")
-
-#     os.makedirs(path)
-#     print("Image Directory created", path)
-#     x_temp = np.zeros((len(x), img_height, img_width))
-#     print("saving images...")
-#     stime = time.time()
-#     for i in tqdm(range(x.shape[0])):
-#         x_temp[i] = np.reshape(x[i], (img_height, img_width))
-#         img = Image.fromarray(x_temp[i], 'RGB')
-#         img.save(os.path.join(path, str(file_names[i]) + '.png'))
-
-#     print_time("Images saved at " + path, stime)
-#     return x_temp
+    # Plotting F1-Score
+    plt.plot([i + 1 for i in range(len(history["loss"]))], history['f1_score'])
+    plt.plot([i + 1 for i in range(len(history["loss"]))],
+             history['val_f1_score'])
+    plt.title('Model F1-Score')
+    plt.ylabel('F1-Score')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
