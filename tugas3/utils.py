@@ -394,9 +394,9 @@ def f1_score(y_true, y_pred):
     return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
 
 
-# Plot accuracy and loss of neural network model
+# Plot metrics of neural network model
 def plot_history(history):
-    # Plotting loss
+    # Plot loss
     plt.plot([i + 1 for i in range(len(history["loss"]))], history['loss'])
     plt.plot([i + 1 for i in range(len(history["loss"]))], history['val_loss'])
     plt.title('Model Loss')
@@ -405,7 +405,7 @@ def plot_history(history):
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
 
-    # Plotting accuracy on training data
+    # Plot accuracy
     plt.plot([i + 1 for i in range(len(history["loss"]))], history['accuracy'])
     plt.plot([i + 1 for i in range(len(history["loss"]))],
              history['val_accuracy'])
@@ -415,7 +415,7 @@ def plot_history(history):
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
 
-    # Plotting F1-Score
+    # Plot f1-score
     plt.plot([i + 1 for i in range(len(history["loss"]))], history['f1_score'])
     plt.plot([i + 1 for i in range(len(history["loss"]))],
              history['val_f1_score'])
