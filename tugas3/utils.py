@@ -1,5 +1,4 @@
 import time
-import datetime
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -7,8 +6,6 @@ from alpha_vantage.techindicators import TechIndicators
 from sklearn.utils import compute_class_weight
 from tensorflow.keras import backend as K
 import matplotlib.pyplot as plt
-from PIL import Image
-import os
 
 
 #### 15 TECHNICAL INDICATORS ####
